@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Answer Question</title>
+</head>
+<body>
+    <h1>Answer the Question</h1>
+    <form action="/question" method="post">
+        <p>{{ question }}</p> <!-- Displays the question dynamically -->
+        <input type="text" name="answer" required> <!-- Input field for the answer -->
+        <button type="submit">Next</button> <!-- Submit button to send the form -->
+    </form>
+</body>
+</html>

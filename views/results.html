@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Results</title>
+</head>
+<body>
+    <h1>Results</h1>
+    <p>Score: {{ score }}%</p>
+
+    <ul>
+        {% for question, answer, is_correct in results %}
+            <li>
+                <strong>Question:</strong> {{ question }}<br>
+                <strong>Your Answer:</strong> {{ answer }}<br>
+                <strong>Correct:</strong> {{ is_correct }}<br>
+            </li>
+        {% endfor %}
+    </ul>
+
+    <a href="/">Upload another PDF</a>
+</body>
+</html>

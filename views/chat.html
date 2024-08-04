@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>CandiBot</title>
+    <!-- Bootstrap CSS for styling -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">
+    <!-- FontAwesome for icons -->
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.5.0/css/all.css" integrity="sha384-B4dIYHKNBt8Bc12p+WXckhzcICo0wtJAoU8YZTY5qE0Id1GSseTk6S+L3BlXeVIU" crossorigin="anonymous">
+    <!-- jQuery for handling JavaScript -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <!-- Custom CSS for additional styling -->
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style.css')}}"/>
+</head>
+<body>
+    <div class="container-fluid h-100">
+        <div class="row justify-content-center h-100">        
+            <div class="col-md-8 col-xl-6 chat">
+                <div class="card">
+                    <div class="card-header msg_head">
+                        <div class="d-flex bd-highlight">
+                            <div class="img_cont">
+                                <!-- Bot profile image -->
+                                <img src="https://i.ibb.co/fSNP7Rz/icons8-chatgpt-512.png" class="rounded-circle user_img">
+                                <!-- Online status indicator -->
+                                <span class="online_icon"></span>
+                            </div>
+                            <div class="user_info">
+                                <span>CandiBot</span>
+                                <p>Ready to interview!</p>
+                            </div>
+                            <div class="ml-auto">
+                                <!-- Timer display -->
+                                <span id="timer">05:00</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="messageFormeight" class="card-body msg_card_body">                            
+                        <!-- Messages will be dynamically inserted here -->
+                    </div>
+                    <div class="card-footer">
+                        <!-- Form for sending messages -->
+                        <form id="messageArea" class="input-group">
+                            <input type="text" id="text" name="answer" placeholder="Type your message..." autocomplete="off" class="form-control type_msg" required/>
+                            <div class="input-group-append">
+                                <button type="submit" id="send" class="input-group-text send_btn"><i class="fas fa-location-arrow"></i></button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        $(document).ready(function() {
+            let submissionCount = 0; // Counter for the number of submissions
+            const maxSubmissions = 8; // Maximum number of submissions allowed
+            const initialUrl = "/submit_answer"; // URL for submitting answers
+            const alternateUrl = "/submit_hr_answers"; // URL for submitting HR answers
+            const getInitialQuestionUrl = "/get_question"; // URL for getting initial questions
+            const getHrQuestionUrl = "/get_hr_question"; // URL for getting HR questions
+
+            // Timer logic
+            let timer = 300; // 5 minutes in seconds
+            const timerElement = $('#timer');
+            const countdown = setInterval(() => {
+                const minutes = Math.floor(timer / 60);
+                const seconds = timer % 60;
+                timerElement.text(`${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`);
+                if (timer > 0) {
+                    timer--;
+                } else {
+                    clearInterval(countdown);
+                    // Handle the timeout here
+                    alert('Time is up!');
+                    $("#text").prop("disabled", true);
+                    $("#send").prop("disabled", true);
+                    var botHtml = '<div class="d-flex justify-content-start mb-4"><div class="img_cont_msg"><img src="https://i.ibb.co/fSNP7Rz/icons8-chatgpt-512.png" class="rounded-circle user_img_msg"></div><div class="msg_cotainer">Time is up! You can no longer submit answers.</div></div>';
+                    $("#messageFormeight").append(botHtml);
+                    $("#messageFormeight").scrollTop($("#messageFormeight")[0].scrollHeight);
+                }
+            }, 1000);
+
+            // Function to get the next question
+            function getQuestion() {
+                const questionUrl = submissionCount < maxSubmissions ? getInitialQuestionUrl : getHrQuestionUrl;
+                $.ajax({
+                    url: questionUrl,
+                    type: "GET",
+                    success: function(data) {
+                        if (data.error) {
+                            $("#messageFormeight").append('<div class="d-flex justify-content-start mb-4"><div class="img_cont_msg"><img src="https://i.ibb.co/fSNP7Rz/icons8-chatgpt-512.png" class="rounded-circle user_img_msg"></div><div class="msg_cotainer">' + data.error + '</div></div>');
+                            return;
+                        }
+                        var botHtml = '<div class="d-flex justify-content-start mb-4"><div class="img_cont_msg"><img src="https://i.ibb.co/fSNP7Rz/icons8-chatgpt-512.png" class="rounded-circle user_img_msg"></div><div class="msg_cotainer">' + data.question + '</div></div>';
+                        $("#messageFormeight").append(botHtml);
+                        // Scroll to the bottom and focus on the input field
+                        $("#messageFormeight").scrollTop($("#messageFormeight")[0].scrollHeight);
+                        $("#text").focus();
+                    }
+                });
+            }
+
+            // Get the first question when the page loads
+            getQuestion();
+            $("#text").focus();
+
+            // Handle form submission
+            $("#messageArea").on("submit", function(event) {
+                event.preventDefault();
+                
+                // Get the current time
+                const date = new Date();
+                const hour = date.getHours();
+                const minute = date.getMinutes();
+                const str_time = hour + ":" + (minute < 10 ? '0' : '') + minute;
+                
+                var rawText = $("#text").val();
+                var userHtml = '<div class="d-flex justify-content-end mb-4"><div class="msg_cotainer_send">' + rawText + '<span class="msg_time_send">' + str_time + '</span></div><div class="img_cont_msg"><img src="https://i.ibb.co/d5b84Xw/Untitled-design.png" class="rounded-circle user_img_msg"></div></div>';
+                
+                $("#text").val("");
+                $("#messageFormeight").append(userHtml);
+                // Scroll to the bottom and focus on the input field
+                $("#messageFormeight").scrollTop($("#messageFormeight")[0].scrollHeight);
+                $("#text").focus();
+
+                $.ajax({
+                    data: { answer: rawText },
+                    type: "POST",
+                    url: submissionCount < maxSubmissions ? initialUrl : alternateUrl,
+                    success: function(data) {
+                        if (data.error) {
+                            var botHtml = '<div class="d-flex justify-content-start mb-4"><div class="img_cont_msg"><img src="https://i.ibb.co/fSNP7Rz/icons8-chatgpt-512.png" class="rounded-circle user_img_msg"></div><div class="msg_cotainer">' + data.error + '</div></div>';
+                            $("#messageFormeight").append(botHtml);
+                        } else if (data.completed) {
+                            // Disable the input field and button
+                            $("#messageFormeight").append('<div class="d-flex justify-content-start mb-4"><div class="img_cont_msg"><img src="https://i.ibb.co/fSNP7Rz/icons8-chatgpt-512.png" class="rounded-circle user_img_msg"></div><div class="msg_cotainer">***...Thank you...***</div></div>');
+                            $("#text").prop("disabled", true);
+                            $("#send").prop("disabled", true);
+                            // Handle redirection on client-side
+                            $.ajax({
+                                url: "{{ url_for('result_controller.show_results') }}", // Pass the show_results URL from Flask
+                                type: "GET",
+                                success: function(results) {
+                                     if (results.score && results.feedback) {
+                                            // Commented out the code that displays the results and feedback
+                                            // var resultsHtml = '<div class="d-flex justify-content-start mb-4"><div class="img_cont_msg"><img src="https://i.ibb.co/fSNP7Rz/icons8-chatgpt-512.png" class="rounded-circle user_img_msg"></div><div class="msg_cotainer">Results: ' + results.score + '<br>Feedback: ' + results.feedback + '</div></div>';
+                                            // $("#messageFormeight").append(resultsHtml);
+                                            // $("#messageFormeight").scrollTop($("#messageFormeight")[0].scrollHeight);
+                                        }
+                                    }
+                            });
+                        } else {
+                            submissionCount++;
+                            getQuestion();
+                        }
+                        $("#messageFormeight").scrollTop($("#messageFormeight")[0].scrollHeight);
+                        $("#text").focus();
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>
